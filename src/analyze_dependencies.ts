@@ -142,48 +142,55 @@ function getLineEnding(line: string): string | null {
     return null; // Line ending not found
 }
 
+function applyLatestVersion(
+    dependency: Dependency,
+    response: NonNullable<Awaited<ReturnType<typeof fetchDependency>>>
+): void {
+    const latestVersion = response.data.latest.version;
+
+    if (dependency.hasPrefix) {
+        const prefixedLatestVersion = '^' + latestVersion;
+        if (prefixedLatestVersion !== dependency.currentVersion) {
+            dependency.latestVersion = prefixedLatestVersion;
+            dependency.latestVersionOffset = prefixedLatestVersion.length;
+            dependency.updateAvailable = true;
+        } else {
+            dependency.latestVersion = '';
+            dependency.updateAvailable = false;
+        }
+    } else {
+        if (latestVersion !== dependency.currentVersion) {
+            dependency.latestVersion = latestVersion;
+            dependency.latestVersionOffset = latestVersion.length;
+            dependency.updateAvailable = true;
+        } else {
+            dependency.latestVersion = '';
+            dependency.updateAvailable = false;
+        }
+    }
+}
+
 // check for updates for each dependency and return a list of the dependencies with the latest version
 // and whether an update is available or not
 export async function checkForUpdates(dependencies: Dependency[]): Promise<Dependency[]> {
-    const batchSize = 4;
-    const batches = [];
+    const concurrency = 6;
+    let nextIndex = 0;
 
-    for (let i = 0; i < dependencies.length; i += batchSize) {
-        const batch = dependencies.slice(i, i + batchSize);
-        batches.push(batch);
-    }
-
-    for (const batch of batches) {
-        const promises = batch.map(async (dependency) => {
+    async function worker(): Promise<void> {
+        while (nextIndex < dependencies.length) {
+            const index = nextIndex++;
+            const dependency = dependencies[index];
             const response = await fetchDependency(dependency);
             if (response !== null) {
-                const latestVersion = response.data.latest.version;
-
-                if (dependency.hasPrefix) {
-                    const prefixedLatestVersion = '^' + latestVersion;
-                    if (prefixedLatestVersion !== dependency.currentVersion) {
-                        dependency.latestVersion = prefixedLatestVersion;
-                        dependency.latestVersionOffset = prefixedLatestVersion.length;
-                        dependency.updateAvailable = true;
-                    } else {
-                        dependency.latestVersion = '';
-                        dependency.updateAvailable = false;
-                    }
-                } else {
-                    if (latestVersion !== dependency.currentVersion) {
-                        dependency.latestVersion = latestVersion;
-                        dependency.latestVersionOffset = latestVersion.length;
-                        dependency.updateAvailable = true;
-                    } else {
-                        dependency.latestVersion = '';
-                        dependency.updateAvailable = false;
-                    }
-                }
+                applyLatestVersion(dependency, response);
             }
-        });
-
-        await Promise.all(promises);
+        }
     }
+
+    const workerCount = Math.min(concurrency, dependencies.length);
+    await Promise.all(
+        Array.from({ length: workerCount }, () => worker())
+    );
 
     return dependencies;
 }

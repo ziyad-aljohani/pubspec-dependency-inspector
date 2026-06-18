@@ -6,6 +6,13 @@ The Changelog follows the structure outlined in [Keep a Changelog](http://keepac
 
 Check [Keep a Changelog](http://keepachangelog.com/) for recommendations on how to structure this file.
 
+## [0.0.5] - 2026-06-18
+### Added
+- 30-minute per-package in-memory cache for pub.dev version lookups
+
+### Changed
+- Replaced fixed batches with a 6-worker concurrency pool so a new fetch starts as soon as any in-flight request completes
+
 ## [0.0.4] - 2024-04-29
 ### Fixed
 - Improved analyzing packages [[#5](https://github.com/berkkan22/pubspec-dependency-inspector/pull/5) by [@ziyad-aljohani](https://github.com/ziyad-aljohani)]

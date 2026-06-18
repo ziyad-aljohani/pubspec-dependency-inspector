@@ -3,7 +3,7 @@
   "displayName": "Pubspec dependency inspector",
   "description": "Inspector for Flutter dependencies",
   "publisher": "berkkan",
-  "version": "0.0.4",
+  "version": "0.0.5",
   "engines": {
     "vscode": "^1.79.0"
   },
@@ -48,7 +48,9 @@
     "watch": "tsc -watch -p ./",
     "pretest": "npm run compile && npm run lint",
     "lint": "eslint src --ext ts",
-    "test": "node ./out/test/runTest.js"
+    "test": "node ./out/test/runTest.js",
+    "verify": "npm run compile && node ./scripts/verify.cjs",
+    "package": "npm run verify && npx vsce package"
   },
   "devDependencies": {
     "@types/glob": "^8.1.0",
@@ -58,6 +60,7 @@
     "@typescript-eslint/eslint-plugin": "^5.59.8",
     "@typescript-eslint/parser": "^5.59.8",
     "@vscode/test-electron": "^2.3.2",
+    "@vscode/vsce": "^3.2.1",
     "eslint": "^8.41.0",
     "glob": "^8.1.0",
     "mocha": "^10.2.0",
