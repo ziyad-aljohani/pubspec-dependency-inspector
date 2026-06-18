@@ -9,9 +9,12 @@ Check [Keep a Changelog](http://keepachangelog.com/) for recommendations on how 
 ## [0.0.5] - 2026-06-18
 ### Added
 - 30-minute per-package in-memory cache for pub.dev version lookups
+- Status bar **Update all dependencies** button (with refresh icon) when outdated packages are found
+- Runs `flutter pub upgrade` after updating all dependency versions in `pubspec.yaml`
 
 ### Changed
 - Replaced fixed batches with a 6-worker concurrency pool so a new fetch starts as soon as any in-flight request completes
+- **Update all dependencies** now applies version edits in a single batch, saves the file, runs `flutter pub upgrade`, then re-analyzes to clear diagnostics
 
 ## [0.0.4] - 2024-04-29
 ### Fixed
