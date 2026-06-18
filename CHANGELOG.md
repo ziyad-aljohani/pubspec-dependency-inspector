@@ -15,6 +15,7 @@ Check [Keep a Changelog](http://keepachangelog.com/) for recommendations on how 
 ### Changed
 - Replaced fixed batches with a 6-worker concurrency pool so a new fetch starts as soon as any in-flight request completes
 - **Update all dependencies** now applies version edits in a single batch, saves the file, runs `flutter pub upgrade`, then re-analyzes to clear diagnostics
+- **Update all dependencies** status bar button is only shown while `pubspec.yaml` is the active editor
 
 ## [0.0.4] - 2024-04-29
 ### Fixed

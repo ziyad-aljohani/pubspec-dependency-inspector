@@ -10,6 +10,36 @@ const execAsync = promisify(exec);
 
 let customDiagnosticList: CustomDiagnostic[] = [];
 
+function syncUpdateAllButton(
+	updateAllStatusBarItem: vscode.StatusBarItem,
+	diagnosticCollection: vscode.DiagnosticCollection
+): void {
+	const editor = vscode.window.activeTextEditor;
+	if (!editor || !isPubspecFile(editor.document.fileName)) {
+		updateAllStatusBarItem.hide();
+		return;
+	}
+
+	const hasUpdates = (diagnosticCollection.get(editor.document.uri) ?? []).some(
+		(diagnostic) => diagnostic.code === 'updateDependency'
+	);
+
+	if (hasUpdates) {
+		updateAllStatusBarItem.text = '$(refresh) Update all dependencies';
+		updateAllStatusBarItem.show();
+	} else {
+		updateAllStatusBarItem.hide();
+	}
+}
+
+function hideStatusBarActions(
+	analyzeStatusBarItem: vscode.StatusBarItem,
+	updateAllStatusBarItem: vscode.StatusBarItem
+): void {
+	analyzeStatusBarItem.hide();
+	updateAllStatusBarItem.hide();
+}
+
 async function runAnalyze(
 	diagnosticCollection: vscode.DiagnosticCollection,
 	analyzeStatusBarItem: vscode.StatusBarItem,
@@ -75,8 +105,7 @@ async function runAnalyze(
 		if (diagnosticList.length > 0) {
 			diagnosticCollection.set(document.uri, diagnosticList);
 			analyzeStatusBarItem.hide();
-			updateAllStatusBarItem.text = '$(refresh) Update all dependencies';
-			updateAllStatusBarItem.show();
+			syncUpdateAllButton(updateAllStatusBarItem, diagnosticCollection);
 		} else {
 			diagnosticCollection.delete(document.uri);
 			updateAllStatusBarItem.hide();
@@ -169,6 +198,7 @@ export function activate(context: vscode.ExtensionContext) {
 					diagnosticList.splice(diagnosticIndex, 1);
 					customDiagnosticList.splice(i, 1);
 					diagnosticCollection.set(document.uri, diagnosticList);
+					syncUpdateAllButton(updateAllStatusBarItem, diagnosticCollection);
 				}
 
 				if (dependency.hasPrefix && diagnosticIndex !== undefined) {
@@ -285,7 +315,10 @@ export function activate(context: vscode.ExtensionContext) {
 	context.subscriptions.push(
 		vscode.window.onDidChangeActiveTextEditor((editor: vscode.TextEditor | undefined) => {
 			if (editor !== undefined && isPubspecFile(editor.document.fileName)) {
+				syncUpdateAllButton(updateAllStatusBarItem, diagnosticCollection);
 				void vscode.commands.executeCommand(`${COMMAND_PREFIX}.analyzeDependencies`);
+			} else {
+				hideStatusBarActions(analyzeStatusBarItem, updateAllStatusBarItem);
 			}
 		})
 	);
